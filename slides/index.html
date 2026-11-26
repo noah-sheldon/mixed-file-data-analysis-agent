@@ -118,6 +118,7 @@
       <div class="lane"><h3 class="amber">PDF / DOCX → search</h3><p>Text chunks with page, file ID, hash and ACL</p></div>
     </div>
     <p class="lede">Keep the source, govern the metrics, retrieve only relevant context.</p>
+    <p>Local demo: DuckDB. Shared, high-concurrency OLAP: benchmark ClickHouse or the warehouse you already run.</p>
     <div class="foot"><span>USE THE WAREHOUSE YOU ALREADY HAVE</span><span>05 / 15</span></div>
   </section>
   <section class="slide" data-notes="Distinguish extraction, reusable file references, search indexing and prompt caching. GPT and Claude can seem fast because ingestion/retrieval may have happened before the question, and the answer uses selected context. Prompt cache is for matching stable prefixes; it is not the searchable corpus. OpenAI's direct file inputs use separate PDF, Word/text, and spreadsheet paths; Claude's PDF path provides page text and images. Measure ingestion separately from answer latency.">

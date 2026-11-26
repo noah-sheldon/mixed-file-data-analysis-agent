@@ -113,6 +113,7 @@ For analyst questions, expose curated gold views or a semantic layer with metric
 ### Platform choices
 
 - **Already have a warehouse?** Use it. Add file ingestion and a governed semantic surface there before adding a second platform.
+- **DuckDB vs ClickHouse:** DuckDB is the local demo/default when one process needs to query normalized CSV/XLSX or Parquet with SQL and minimal operations. It is embedded, so the demo needs no database server. ClickHouse is a serious candidate when the application needs a shared OLAP service: high query concurrency, continuous append-heavy ingestion, large analytical tables, dashboards, or horizontal growth. It is also columnar and can run locally, so the distinction is deployment/workload fit, not that DuckDB cannot do analytics or that ClickHouse is only for “big data.” For this project, hundreds of office files alone do not establish the need for ClickHouse. Benchmark representative normalized data and a realistic mix of users/queries before switching. Neither engine replaces PDF/DOCX extraction, source provenance, authorization, or document retrieval.
 - **Snowflake:** Cortex Agents can combine Cortex Analyst for structured queries via semantic views and Cortex Search for unstructured retrieval. The docs emphasize semantic descriptions and verified queries for SQL accuracy.
 - **BigQuery:** Data agents are configured over selected knowledge sources with metadata/instructions/verified queries; permissions apply to agent access. The conversational analytics docs also describe using data agents with PDF-like object data. This is a natural fit if the team already runs GCP/BigQuery.
 - **Databricks:** Genie Agents use Unity Catalog assets, instructions, example SQL, and knowledge snippets; the medallion pattern can move raw inputs toward validated and business-ready tables.
@@ -169,6 +170,9 @@ These are documented API behaviors, not a claim that the consumer ChatGPT and Cl
 - [Databricks Genie Agent quality](https://docs.databricks.com/aws/en/genie-agents/tune-quality/)
 - [dbt Semantic Layer](https://docs.getdbt.com/docs/use-dbt-semantic-layer/dbt-sl)
 - [DuckDB Parquet and query docs](https://duckdb.org/docs/stable/data/parquet/overview)
+- [DuckDB FAQ: embedded and persistent modes](https://duckdb.org/faq)
+- [ClickHouse: real-time analytics architecture](https://clickhouse.com/ClickHouse)
+- [ClickHouse: concurrency sizing](https://clickhouse.com/resources/engineering/high-concurrency-sizing-user-analytics)
 - [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs)
 - [OpenAI File Search](https://developers.openai.com/api/docs/guides/tools-file-search)
 - [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
