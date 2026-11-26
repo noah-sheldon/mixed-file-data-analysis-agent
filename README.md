@@ -56,6 +56,7 @@ Run the plain baseline and both framework adapters over the same test cases, mod
 ## Files
 
 - `slides/index.html` — self-contained, keyboard-navigable stream deck; press `?` for controls and print to PDF.
+- `docs/system-design.mmd` — editable Mermaid source for the ingestion and question-answer architecture diagrams.
 - `notebooks/live_demo.ipynb` — visible, cell-by-cell stream walkthrough.
 - `src/data_agent/` — ingestion, local query/search tools, and optional framework adapters.
 - `evals/cases.json` — starter golden cases for exact and grounded answers.

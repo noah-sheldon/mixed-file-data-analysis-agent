@@ -1,0 +1,35 @@
+flowchart LR
+  subgraph INGESTION["1. Ingest once, update incrementally"]
+    A["CSV / XLSX / PDF / DOCX"] --> B["Object storage<br/>original + checksum"]
+    B --> C["Manifest + queue<br/>file type · parser version · ACL"]
+    C --> D{"Format router<br/>deterministic code"}
+    D -->|"CSV / XLSX"| E["Parse sheets<br/>type + validate"]
+    E --> F["Warehouse tables<br/>bronze → silver → gold"]
+    D -->|"PDF / DOCX"| G["Extract text / OCR<br/>preserve page + heading"]
+    G --> H["Document index<br/>chunks + provenance + ACL"]
+  end
+
+  subgraph QUESTION["2. Answer a question"]
+    I["User question"] --> J["Authenticate + scope<br/>deterministic code"]
+    J --> K["Route intent<br/>bounded model output"]
+    K -->|"structured"| L["SQL guard + query<br/>deterministic code"]
+    K -->|"documents"| M["ACL-filtered search<br/>deterministic code"]
+    K -->|"both"| L
+    K -->|"both"| M
+    K -->|"unclear"| N["Ask one clarification"]
+    L --> O["Rows + query reference"]
+    M --> P["Passages + source location"]
+    O --> Q["Synthesize answer<br/>LLM"]
+    P --> Q
+    Q --> R["Verify citations + format<br/>deterministic checks"]
+    R --> S["Answer with evidence"]
+  end
+
+  F -. "structured evidence" .-> L
+  H -. "narrative evidence" .-> M
+
+  subgraph ADAPTIVE["Optional: open-ended investigation"]
+    T["Tool result"] --> U["Agent chooses next permitted step"]
+    U --> L
+    U --> M
+  end
