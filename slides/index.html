@@ -72,7 +72,7 @@
   <section class="slide cover active" data-notes="Open with the problem: a real question often needs both exact numbers and written context. We'll build the smallest safe route through both.">
     <div class="rule"></div><div class="tag">LIVE BUILD / DATA SYSTEMS</div>
     <h1>Build a data analysis agent for <span class="mint">messy files</span></h1>
-    <p class="lede">CSV · Excel · PDF · Word<br>Two agent frameworks. One set of tools. Measured before scaled.</p>
+    <p class="lede">CSV · Excel · PDF · Word<br>Begin with a pipeline. Add routing and autonomy only when needed.</p>
     <div class="sub"><span class="dot"></span> STREAM PLAN / REPO INCLUDED</div>
   </section>
   <section class="slide" data-notes="Ask viewers which of these they have. Point out that a table and a paragraph need different kinds of reasoning and different evidence. Hundreds of files change retrieval and operations, not the need to put everything in a prompt.">
@@ -93,19 +93,6 @@
     <p class="lede">Scanned PDFs and complex layouts may need OCR or layout-aware parsing. Verify extraction on your own files.</p>
     <div class="foot"><span>CSV/XLSX ≠ PDF/DOCX</span><span>03 / 15</span></div>
   </section>
-  <section class="slide" data-notes="Walk from user question to exact computation and source citation. The agent does not receive the whole corpus. It gets a catalog, query function and evidence search, then composes a response from tool outputs.">
-    <div class="tag">RUNTIME SHAPE</div><h2>Put the data behind narrow tools.</h2>
-    <div class="flow">
-      <div class="node"><strong>QUESTION</strong><span>“Revenue and why?”</span></div><div class="connector">→</div>
-      <div class="node"><strong>ROUTER</strong><span>SQL + evidence<br>only what is needed</span></div><div class="connector">→</div>
-      <div class="node"><strong>ANSWER</strong><span>number + sources<br>or clear abstention</span></div>
-    </div>
-    <div class="lanes">
-      <div class="lane"><h3 class="mint">Structured lane</h3><p>Catalog → validated read-only SELECT → result rows</p></div>
-      <div class="lane"><h3 class="amber">Document lane</h3><p>Search → page/section passages → cited claims</p></div>
-    </div>
-    <div class="foot"><span>AGENTIC ROUTING, DETERMINISTIC EXECUTION</span><span>04 / 15</span></div>
-  </section>
   <section class="slide" data-notes="Show the warehouse path. Keep originals and manifest, normalize sheets and tables in layers, publish curated metrics for exact queries, and place document text in a search index with source/page/access metadata. Hundreds of files alone do not require three copies or a cloud warehouse. If an existing warehouse exists, use its governed access and semantic layer.">
     <div class="tag">WAREHOUSE PATH</div><h2>Files land raw. Trusted answers come from curated data.</h2>
     <div class="flow">
@@ -119,7 +106,7 @@
     </div>
     <p class="lede">Keep the source, govern the metrics, retrieve only relevant context.</p>
     <p>Local demo: DuckDB. Shared, high-concurrency OLAP: benchmark ClickHouse or the warehouse you already run.</p>
-    <div class="foot"><span>USE THE WAREHOUSE YOU ALREADY HAVE</span><span>05 / 15</span></div>
+    <div class="foot"><span>USE THE WAREHOUSE YOU ALREADY HAVE</span><span>04 / 15</span></div>
   </section>
   <section class="slide" data-notes="Distinguish extraction, reusable file references, search indexing and prompt caching. GPT and Claude can seem fast because ingestion/retrieval may have happened before the question, and the answer uses selected context. Prompt cache is for matching stable prefixes; it is not the searchable corpus. OpenAI's direct file inputs use separate PDF, Word/text, and spreadsheet paths; Claude's PDF path provides page text and images. Measure ingestion separately from answer latency.">
     <div class="tag">WHY IT FEELS INSTANT</div><h2>Fast file answers use a pipeline.</h2>
@@ -133,27 +120,41 @@
       <div class="lane"><h3 class="amber">Prompt cache ≠ file store</h3><p>Reuses matching prompt prefixes; it does not search every document.</p></div>
     </div>
     <p class="lede">For hundreds of files, ingest once, retrieve selectively, and measure each stage.</p>
-    <div class="foot"><span>PREP TIME ≠ QUERY TIME ≠ CACHE</span><span>06 / 15</span></div>
+    <div class="foot"><span>PREP TIME ≠ QUERY TIME ≠ CACHE</span><span>05 / 15</span></div>
   </section>
-  <section class="slide" data-notes="The question is whether the task needs autonomous decisions. A plain function/tool loop is enough for fixed sequence work. A graph is useful for state, branches, retries and checkpoints. Do not confuse data/file scaling with agent workflow complexity.">
-    <div class="tag">DO WE NEED A FRAMEWORK?</div><h2>Start with the smallest controller that works.</h2>
+  <section class="slide" data-notes="This is the core routing decision. File ingestion, permissions and execution are deterministic. For open natural-language questions, one bounded planner returns a strict enum: structured, documents, both, or clarify. Code validates the enum, scopes tools to the authenticated user, then executes. For both, run SQL and search in parallel. The LLM synthesizes from returned evidence; code verifies source references. Add a bounded tool loop only when intermediate results change the next useful action. For an ordinary fixed question, skip the agent loop; for an open-ended investigation and report, escalate to Deep Agents with explicit limits. Sources: https://www.anthropic.com/research/building-effective-agents ; https://docs.langchain.com/oss/python/langgraph/workflows-agents ; https://docs.haystack.deepset.ai/docs/choosing-between-pipelines-and-agents">
+    <div class="tag">QUESTION ROUTING</div><h2>Structured, documents, both, or clarify</h2>
+    <div class="flow">
+      <div class="node"><strong>QUESTION</strong><span>“What changed<br>and why?”</span></div><div class="connector">→</div>
+      <div class="node"><strong>LLM PLAN</strong><span>structured · docs<br>both · clarify</span></div><div class="connector">→</div>
+      <div class="node"><strong>CODE DISPATCHES</strong><span>SQL · search<br>both · ask</span></div>
+    </div>
+    <div class="lanes">
+      <div class="lane"><h3 class="mint">Always deterministic</h3><p>Access · SQL checks · limits · retrieval filters · source checks</p></div>
+      <div class="lane"><h3 class="amber">Agent loop only when needed</h3><p>Choose the next tool from earlier results; stop at a fixed budget.</p></div>
+    </div>
+    <p class="lede">One pass for common questions. Adaptive loop for investigations.</p>
+    <div class="foot"><span>MODEL CHOOSES INTENT; CODE ENFORCES POLICY</span><span>06 / 15</span></div>
+  </section>
+  <section class="slide" data-notes="These are increasing levels of control, not a feature checklist to adopt all at once. Plain Python is the baseline. The bounded planner is one structured model call, not an autonomous agent. A LangGraph workflow makes conditional state, retries, and approval explicit. Deep Agents adds autonomy for tasks whose next steps are not knowable upfront. Use a warehouse-native agent when one already fits the stack. Keep the same data tools underneath all of them. Sources: https://docs.langchain.com/oss/python/langgraph/workflows-agents ; https://docs.langchain.com/oss/python/deepagents/overview">
+    <div class="tag">CONTROLLER OPTIONS</div><h2>Four levels of control</h2>
     <div class="compare">
       <div class="compare-row"><div>OPTION</div><div>GOOD FIT</div><div>WHAT IT ADDS</div></div>
-      <div class="compare-row"><p>Plain Python</p><p>Fixed parse → query → answer</p><p>Few moving parts; easy to debug</p></div>
-      <div class="compare-row"><p>LangGraph</p><p>Branches, loops, state, approval</p><p>Explicit runtime and checkpoints</p></div>
-      <div class="compare-row"><p>Deep Agents</p><p>Open-ended, long-running analysis</p><p>Planning, memory, workspace, subagents</p></div>
-      <div class="compare-row"><p>Warehouse agent</p><p>One cloud stack already in place</p><p>Managed permissions + native semantics</p></div>
+      <div class="compare-row"><p>Plain Python</p><p>Known steps</p><p>Simple, repeatable execution</p></div>
+      <div class="compare-row"><p>Bounded planner</p><p>Ambiguous intent</p><p>Chooses structured / docs / both / clarify</p></div>
+      <div class="compare-row"><p>LangGraph</p><p>Branches, state, retries, approval</p><p>Visible workflow and checkpoints</p></div>
+      <div class="compare-row"><p>Deep Agents</p><p>Open investigation</p><p>Planning, workspace, subagents</p></div>
     </div>
-    <p class="lede">A framework helps with orchestration. It does not fix unclear metric definitions or poor source data.</p>
+    <p class="lede">The warehouse or search platform can stay the same at every level.</p>
     <div class="foot"><span>FRAMEWORKS ARE OPTIONAL</span><span>07 / 15</span></div>
   </section>
-  <section class="slide" data-notes="Answer the Deep Agents question directly: the harness uses the LangGraph runtime. For this product a known, bounded data path is easier to govern. A Deep Agent is suitable for a broader analyst that explores, adjusts, generates notebooks/reports, and retains context. Keep tool permissions and query constraints outside its autonomy.">
-    <div class="tag">LANGGRAPH WORKFLOW OR DEEP AGENT?</div><h2>Same runtime family. Different autonomy.</h2>
+  <section class="slide" data-notes="A routine question has known boundaries: authenticate, plan the route, run bounded query/search, check evidence, answer. Put that in a workflow. A Deep Agent fits when investigation steps emerge from findings: explore segments, search reports, revise hypotheses, write an artifact. It uses the LangGraph runtime under the hood, so this is a choice about autonomy and harness features, not a separate database or parser. Keep permissions and query budgets outside agent discretion. Source: https://docs.langchain.com/oss/python/deepagents/overview">
+    <div class="tag">WORKFLOW OR DEEP AGENT?</div><h2>Use an agent when the next step is unknown</h2>
     <div class="lanes">
-      <div class="lane"><h3 class="mint">Workflow for this first build</h3><ul><li>Route to SQL, docs, or both</li><li>Bounded read-only tools and query budget</li><li>Check citations, then answer</li></ul></div>
-      <div class="lane"><h3 class="amber">Deep Agent for analyst work</h3><ul><li>Plan an investigation as it learns</li><li>Work through large, variable evidence</li><li>Delegate domains; create a report</li></ul></div>
+      <div class="lane"><h3 class="mint">Workflow · normal analyst question</h3><ul><li>Plan one route</li><li>Run scoped SQL/search</li><li>Check sources and answer</li></ul></div>
+      <div class="lane"><h3 class="amber">Deep Agent · open investigation</h3><ul><li>Inspect results and choose next action</li><li>Repeat within a tool/time budget</li><li>Write a report; request review</li></ul></div>
     </div>
-    <p class="lede">Deep Agents is a LangGraph-based harness—not a separate competing runtime. Keep warehouse access narrow in either design.</p>
+    <p class="lede">Deep Agents uses LangGraph underneath. It adds autonomy; it does not replace the data pipeline.</p>
     <div class="foot"><span>ADD AUTONOMY WHEN THE TASK NEEDS IT</span><span>08 / 15</span></div>
   </section>
   <section class="slide" data-notes="Use the company examples. Spotify uses expert-owned clusters with table profiles, vetted NL-to-SQL examples, and docs. OpenAI describes offline context enrichment, selected runtime context, live warehouse queries, and notebooks/reports. incident.io describes a data-query tool that validates table allowlists and scan cost. The repeated lesson is governed context and reliable execution; company blogs are self-reported case studies, not independent comparisons.">
@@ -182,7 +183,7 @@ evidence = search_documents(db_path, "promotion demand")</div>
     <p class="lede">Pause on rows and source locations. Then ask the model to choose the tools.</p>
     <div class="foot"><span>DATA → TOOL → OUTPUT</span><span>10 / 15</span></div>
   </section>
-  <section class="slide" data-notes="Demonstrate a mixed question. Compare tool calls and answers from LangGraph and LlamaIndex using one shared tool implementation. Explain query validation and external access disabled for the local demo. Never let the model execute generated Python code.">
+  <section class="slide" data-notes="Demonstrate a mixed question. Run the same tools and model through LangGraph and LlamaIndex to show the integration shape. This short demonstration is not a framework speed or quality benchmark; the formal comparison uses the fixed eval set and identical budgets. Explain query validation and that external access is disabled for the local demo. Never let the model execute generated Python code.">
     <div class="tag">LIVE BUILD / 2</div><h2>Same tools. Swap the orchestrator.</h2>
     <div class="lanes">
       <div class="lane"><h3 class="mint">LangGraph</h3><ul><li>Model proposes a tool call</li><li>ToolNode runs the bounded function</li><li>Graph returns to the model</li></ul></div>

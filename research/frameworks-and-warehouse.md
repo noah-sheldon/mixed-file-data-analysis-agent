@@ -44,13 +44,45 @@ Snowflake Cortex Agents can call Cortex Analyst over semantic views for structur
 
 ## Recommendation for the livestream build
 
-Teach **three implementation levels**, while keeping one set of data tools and eval cases:
+Teach the build as a progression, with one set of data tools and eval cases:
 
-1. **Plain Python baseline:** deterministic file ingestion, catalog, SQL validator and search function; optionally one model tool loop. This tests whether an agent is even needed.
-2. **LangGraph workflow:** add explicit state/routing/checkpoints when requests need a fixed, inspectable sequence. This is the best framework demo for showing control.
-3. **Deep Agents experiment:** make a separate branch or notebook cell for an investigation-style prompt that can plan, revisit evidence, use persistent workspace, and create a report. Deep Agents is built on LangGraph, so present it as a higher-level harness/autonomy choice, not another unrelated graph engine.
+1. **Plain Python baseline:** deterministic file ingestion, catalog, SQL validator and document search. Run known queries directly. This is the control case.
+2. **Bounded routing:** add a small LLM planner that returns only `structured`, `documents`, `both`, or `clarify`. Python checks that route and dispatches tools; use the same model for a grounded final answer.
+3. **LangGraph workflow:** make the sequence, state, retries, and review checkpoints visible when they add value. Keep authorization, query policy, and execution in ordinary code nodes/tools.
+4. **Deep Agents stretch:** separately demonstrate an investigation prompt that plans, revisits evidence, uses a workspace, and creates a report. Deep Agents is built on LangGraph, so present it as a higher-autonomy harness, not a peer workflow engine.
 
-Mention LlamaIndex as the data-centric alternative and CrewAI as a role/Flow-oriented alternative in the comparison slide, but avoid implementing four frameworks in the livestream. Keep the ranking fair: same model, question set, source tools, authorization, output schema, and cost/time ceilings. Record tool traces and score exact SQL results, citations, grounded claims, abstention, latency and cost. One properly constrained workflow is a stronger lesson than a large agent cast.
+Do not add more libraries to the livestream bake-off. The current list is already broad. Compare **plain Python vs LangGraph** for control-flow overhead with the same planner, tools, model, and cases. Keep the existing LlamaIndex adapter as a brief data-centric alternative/demo, but do not claim its AgentWorkflow-versus-LangGraph-agent run is a neutral benchmark of each ecosystem. Deep Agents is a different autonomy level; demo it only as the open-ended stretch. Mention the warehouse-native option if the viewer already has Snowflake, BigQuery, or Databricks. DSPy is a possible later experiment for optimizing prompts/programs against eval examples and a metric; it is an optimization tool, not another orchestration runtime. Record traces and score exact SQL results, citations, grounded claims, abstention, latency and cost. [Haystack: pipeline vs agent](https://docs.haystack.deepset.ai/docs/choosing-between-pipelines-and-agents), [DSPy optimizers](https://dspy.ai/learn/optimization/optimizers/).
+
+## Which steps are deterministic and which use an agent?
+
+The useful split is **code owns boundaries and effects; the model handles ambiguous meaning and analysis**. “Agent or workflow” is not an all-or-nothing choice: both LangGraph and Haystack describe fixed control flow with model calls inside it, while agents give the model control over which tools/steps happen. Anthropic recommends fixed workflows for well-defined tasks and dynamic agents when the steps cannot be predicted. [Anthropic: Building effective agents](https://www.anthropic.com/research/building-effective-agents), [LangGraph: workflows and agents](https://docs.langchain.com/oss/python/langgraph/workflows-agents), [Haystack: pipeline vs agent](https://docs.haystack.deepset.ai/docs/choosing-between-pipelines-and-agents).
+
+### Deterministic path (always)
+
+- Authenticate the caller and scope the request to permitted files, tables, tenants, and rows.
+- Discover file types, select the parser, OCR scanned pages when required, normalize tables/text, validate outputs, attach provenance/ACLs, and write/update indexes. Do not ask the LLM to decide security or data-quality rules.
+- Validate proposed SQL against allowed views, read-only policy, timeout/scan/result limits; execute it in the database. Execute document retrieval with ACL filters and return passage locations.
+- Enforce budgets, retries, timeout/stop conditions, log tool inputs/outputs, verify citations, and format the final response. These are operational contracts, not model suggestions.
+
+### Model decision (bounded first)
+
+Natural-language intent is the genuinely ambiguous step. For normal questions, ask one model call for a structured route: `structured` (numbers), `documents` (textual claims), `both`, or `clarify`. Validate that enum in code. Dispatch the corresponding tools deterministically; run the two lanes concurrently for `both`. If question type is already explicit (for example, a query API or a UI tab), skip the LLM router. If the route is `clarify`, ask one concise follow-up instead of silently broadening access. A small evaluated rules/classifier can replace the LLM later if it is accurate enough.
+
+### Where the agent loop earns its cost
+
+Use a bounded tool-calling loop only when a step depends on earlier results: a first query reveals a segment to inspect, document evidence contradicts the table, or the user asks to investigate an unexpected change. Give the loop only the scoped catalog, read-only query, and ACL-filtered search tools. Cap tool calls/time/rows; revalidate every SQL; require citations; stop or ask when evidence is insufficient. For the usual “what was total revenue?” question, the direct workflow has fewer moving parts. For “investigate why churn rose, examine the relevant data and documents, and prepare a report with follow-up questions,” consider a Deep Agent with a workspace, explicit stopping limits, and human approval before consequential actions. Deep Agents adds planning, context management, and delegation on the LangGraph runtime. [Deep Agents overview](https://docs.langchain.com/oss/python/deepagents/overview).
+
+```text
+INGEST (deterministic)
+  file → parser/OCR → validate → table store or document index + provenance/ACL
+
+QUESTION
+  → authenticate + scope (deterministic)
+  → bounded planner: structured | documents | both | clarify (LLM, or rules)
+  → dispatch permitted SQL/search tools (deterministic)
+  → if investigation requires another step: bounded agent loop (optional)
+  → verify sources + format answer (deterministic checks + LLM synthesis)
+```
 
 ## Framework landscape
 
@@ -72,15 +104,14 @@ Compare frameworks by running the same labeled questions, shared tool functions,
 
 ### Is this a Deep Agent?
 
-The first product should be a **LangGraph workflow with a bounded analyst agent inside it**:
+The first product should be a **deterministic ingestion and execution pipeline with one bounded model planner**, wrapped in a LangGraph workflow only if explicit state/checkpoints help:
 
-1. Identify whether the question needs tables, documents, or both.
-2. Call a catalog/semantic-metric tool and a read-only query tool for numeric analysis.
-3. Call document search for narrative evidence.
-4. Check results and citations; abstain when the evidence is absent.
-5. Return the answer with reproducible query/source references.
+1. Authenticate and resolve the data scopes in code.
+2. Let a structured-output model route to tables, documents, both, or clarify.
+3. Execute safe SQL and ACL-filtered document search in code; run both branches concurrently when needed.
+4. Synthesize from the returned evidence, then check source IDs/locations and abstain if evidence is absent.
 
-The ordering, authorization, and query budgets are known in advance, so the application graph should own them. Deep Agents can be a separate experiment for a more open-ended prompt such as “investigate why churn rose, explore the relevant data and documents, create a report, then list follow-up analyses.” It adds useful planning/context/subagent capabilities, but those capabilities do not replace data ingestion, warehouse modeling, or SQL governance. A future version can call a Deep Agent from one bounded graph node if the task needs it.
+The ordering, authorization, and query budgets are known in advance, so code owns them. Let a tool-calling agent loop intervene only when the next useful action depends on intermediate results. Deep Agents can be a separate experiment for a more open-ended prompt such as “investigate why churn rose, explore the relevant data and documents, create a report, then list follow-up analyses.” Its planning and subagent capabilities do not replace ingestion, warehouse modeling, or SQL governance.
 
 ## Data platform architecture for hundreds of mixed files
 
@@ -144,6 +175,7 @@ These are documented API behaviors, not a claim that the consumer ChatGPT and Cl
 - [Anthropic: Building effective agents](https://www.anthropic.com/research/building-effective-agents)
 - [LangGraph multi-agent patterns](https://docs.langchain.com/oss/python/langchain/multi-agent)
 - [LangGraph Graph API](https://docs.langchain.com/oss/python/langgraph/graph-api)
+- [LangGraph workflows and agents](https://docs.langchain.com/oss/python/langgraph/workflows-agents)
 - [Deep Agents overview](https://docs.langchain.com/oss/python/deepagents/overview)
 - [LlamaIndex workflows](https://developers.llamaindex.ai/python/llamaagents/workflows/)
 - [LlamaIndex multi-agent patterns](https://developers.llamaindex.ai/python/framework/understanding/agent/multi_agent/)
@@ -152,7 +184,9 @@ These are documented API behaviors, not a claim that the consumer ChatGPT and Cl
 - [Microsoft Agent Framework overview](https://learn.microsoft.com/agent-framework/overview)
 - [Google ADK documentation](https://google.github.io/adk-docs/)
 - [Haystack introduction](https://docs.haystack.deepset.ai/docs/intro)
+- [Haystack: choosing pipelines or agents](https://docs.haystack.deepset.ai/docs/choosing-between-pipelines-and-agents)
 - [Pydantic AI overview](https://pydantic.dev/docs/ai/overview/)
+- [DSPy optimizers](https://dspy.ai/learn/optimization/optimizers/)
 - [Spotify data assistant case study](https://engineering.atspotify.com/2026/06/encoding-your-domain-expert-the-context-layer-behind-spotifys-data-assistant)
 - [OpenAI in-house data agent](https://openai.com/index/inside-our-in-house-data-agent/)
 - [incident.io agentic data analyst](https://incident.io/blog/agentic-data-analyst-pt-i)
