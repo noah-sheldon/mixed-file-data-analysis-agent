@@ -1,0 +1,8 @@
+order_id,region,product,units,revenue,order_date
+1001,North,Widget,4,120.00,2026-01-05
+1002,South,Gizmo,2,90.00,2026-01-05
+1003,North,Gizmo,5,225.00,2026-01-06
+1004,West,Widget,3,90.00,2026-01-07
+1005,South,Widget,6,180.00,2026-01-08
+1006,West,Gizmo,4,180.00,2026-01-09
+

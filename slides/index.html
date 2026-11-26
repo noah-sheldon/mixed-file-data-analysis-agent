@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#172333">
+<title>Build a data analysis agent | Live stream</title>
+<style>
+  :root { --ink:#172333; --ink2:#243448; --paper:#f2f2e9; --mint:#8ee0c3; --amber:#f0b65d; --muted:#a9b4bf; --line:#405164; --white:#fffdf5; --mono:"SFMono-Regular",Consolas,monospace; --sans:Inter,"Avenir Next",Avenir,"Segoe UI",sans-serif; }
+  * { box-sizing:border-box }
+  html,body { margin:0; height:100%; overflow:hidden; background:var(--ink); color:var(--white); font-family:var(--sans); }
+  body { display:grid; place-items:center; }
+  .deck { width:min(100vw,177.777vh); height:min(100vh,56.25vw); position:relative; overflow:hidden; background:var(--ink); }
+  .slide { display:none; position:absolute; inset:0; padding:7.2% 8.3% 7.5%; background:var(--ink); }
+  .slide.active { display:flex; flex-direction:column; }
+  .slide::after { content:""; position:absolute; right:0; top:0; width:29%; height:100%; opacity:.2; pointer-events:none; background-image:linear-gradient(90deg,transparent 0 44px,var(--line) 45px),linear-gradient(transparent 0 44px,var(--line) 45px); background-size:46px 46px; mask-image:linear-gradient(90deg,transparent,black); }
+  .slide > * { position:relative; z-index:1 }
+  h1,h2,h3,p { margin:0 }
+  h1 { font-size:clamp(48px,6.3vw,98px); line-height:.98; letter-spacing:-.06em; max-width:950px; }
+  h2 { font-size:clamp(38px,4.15vw,64px); line-height:1.02; letter-spacing:-.045em; max-width:1060px; }
+  h3 { font-size:clamp(18px,1.7vw,25px); line-height:1.12; letter-spacing:-.02em; }
+  p,li { font-size:clamp(17px,1.58vw,24px); line-height:1.42; color:#d5dce0; }
+  .lede { margin-top:24px; max-width:760px; font-size:clamp(20px,2vw,30px); color:#c0cbd1; line-height:1.35; }
+  .mint { color:var(--mint) } .amber { color:var(--amber) }
+  .tag { color:var(--mint); font:600 clamp(12px,1vw,15px)/1 var(--mono); letter-spacing:.06em; margin-bottom:20px; }
+  .foot { position:absolute!important; bottom:4%; left:8.3%; right:8.3%; display:flex; justify-content:space-between; color:#a9b4bf; font:12px var(--mono); z-index:4!important; }
+  .cover { justify-content:center; }
+  .cover .rule { width:88px; height:5px; background:var(--mint); margin-bottom:34px; }
+  .cover h1 { max-width:1050px; }
+  .cover .sub { margin-top:34px; display:flex; gap:14px; align-items:center; font:15px var(--mono); color:var(--muted); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--amber); }
+  .columns { display:grid; grid-template-columns:1fr 1fr; gap:6%; margin-top:48px; }
+  .columns > div { border-top:1px solid var(--line); padding-top:18px; }
+  .columns p { margin-top:12px; max-width:450px; }
+  .big-number { font-size:clamp(54px,7vw,104px); line-height:.9; letter-spacing:-.07em; color:var(--amber); }
+  .number-note { margin-top:16px; font:14px var(--mono); color:var(--muted); }
+  .flow { margin:44px 0 0; display:grid; grid-template-columns:1fr 40px 1fr 40px 1fr; align-items:center; gap:12px; }
+  .node { border:1px solid var(--line); min-height:125px; padding:18px; display:flex; flex-direction:column; justify-content:space-between; background:#1d2b3c; }
+  .node strong { font:600 13px var(--mono); color:var(--mint); }
+  .node span { font-size:20px; line-height:1.15; }
+  .connector { color:var(--amber); font:26px var(--mono); text-align:center; }
+  .lanes { display:grid; grid-template-columns:1fr 1fr; gap:28px; margin-top:40px; }
+  .lane { border-left:3px solid var(--mint); padding:0 0 0 22px; }
+  .lane:last-child { border-color:var(--amber); }
+  .lane ul { margin:14px 0 0; padding-left:19px; }
+  .lane li { margin:7px 0; }
+  .code { margin-top:26px; padding:20px 24px; background:#101923; border:1px solid #314253; color:#d1ede3; font:clamp(14px,1.25vw,18px)/1.58 var(--mono); white-space:pre-wrap; }
+  .code em { color:var(--amber); font-style:normal; }
+  .compare { margin-top:32px; border-top:1px solid var(--line); }
+  .compare-row { display:grid; grid-template-columns:1fr 1fr 1.15fr; gap:22px; padding:15px 0; border-bottom:1px solid var(--line); align-items:start; }
+  .compare-row:first-child { color:var(--mint); font:600 13px var(--mono); }
+  .compare-row p { font-size:clamp(15px,1.35vw,20px); }
+  .metric-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:36px; border-top:1px solid var(--line); border-left:1px solid var(--line); }
+  .metric { min-height:114px; padding:17px; border-right:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .metric strong { color:var(--mint); font:14px var(--mono); }
+  .metric p { margin-top:8px; font-size:17px; }
+  .closing { justify-content:center; }
+  .closing h2 { max-width:960px; }
+  .closing .lede { max-width:700px; }
+  .source-list { margin-top:26px; display:grid; grid-template-columns:1fr 1fr; gap:10px 24px; }
+  .source-list a { color:var(--mint); font:14px/1.35 var(--mono); overflow-wrap:anywhere; }
+  .controls { position:absolute; bottom:3.3%; right:8.3%; z-index:5; color:var(--muted); font:12px var(--mono); }
+  .progress { position:absolute; height:3px; left:0; bottom:0; background:var(--mint); z-index:7; transition:width .2s ease; }
+  :focus-visible { outline:3px solid var(--amber); outline-offset:4px; }
+  @media (max-width:720px) { .slide { padding:9% 7% 12%; } .columns,.lanes { grid-template-columns:1fr; gap:20px; margin-top:28px; } .flow { grid-template-columns:1fr; gap:5px; margin-top:24px; } .connector { transform:rotate(90deg); } .node { min-height:74px; } .metric-grid { grid-template-columns:1fr 1fr; margin-top:22px; } .compare-row { grid-template-columns:.75fr 1fr 1fr; gap:10px; padding:10px 0; } .source-list { grid-template-columns:1fr; } .foot { left:7%; right:7%; bottom:3%; } .controls { display:none; } }
+  @media print { html,body { overflow:visible; height:auto; background:white; } body { display:block; } .deck { width:auto; height:auto; overflow:visible; } .slide,.slide.active { display:flex; position:relative; width:13.333in; height:7.5in; page-break-after:always; print-color-adjust:exact; -webkit-print-color-adjust:exact; } .controls,.progress { display:none; } }
+  @media (prefers-reduced-motion:reduce) { .progress { transition:none; } }
+</style>
+</head>
+<body>
+<main class="deck" aria-label="Presentation">
+  <section class="slide cover active" data-notes="Open with the problem: a real question often needs both exact numbers and written context. We'll build the smallest safe route through both.">
+    <div class="rule"></div><div class="tag">LIVE BUILD / DATA SYSTEMS</div>
+    <h1>Build a data analysis agent for <span class="mint">messy files</span></h1>
+    <p class="lede">CSV · Excel · PDF · Word<br>Two agent frameworks. One set of tools. Measured before scaled.</p>
+    <div class="sub"><span class="dot"></span> STREAM PLAN / REPO INCLUDED</div>
+  </section>
+  <section class="slide" data-notes="Ask viewers which of these they have. Point out that a table and a paragraph need different kinds of reasoning and different evidence. Hundreds of files change retrieval and operations, not the need to put everything in a prompt.">
+    <div class="tag">THE DESIGN PROBLEM</div><h2>One question. Four kinds of evidence.</h2>
+    <div class="columns">
+      <div><div class="big-number">01</div><h3>Exact table math</h3><p>“Which region led revenue?” should return a queryable result, not a plausible paragraph.</p></div>
+      <div><div class="big-number">02</div><h3>Document context</h3><p>“Why did demand change?” needs a passage, a source, and a page or section.</p></div>
+    </div>
+    <div class="foot"><span>THE QUESTION DICTATES THE TOOL</span><span>02 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Explain that ingestion is format-specific. XLSX can contain several logical tables. PDFs can be scanned or table-heavy, and parser choice should be driven by a representative corpus and measured extraction quality.">
+    <div class="tag">INGESTION</div><h2>Normalize the files. Keep the original trail.</h2>
+    <div class="flow">
+      <div class="node"><strong>CSV / XLSX</strong><span>Typed tables<br>DuckDB</span></div><div class="connector">→</div>
+      <div class="node"><strong>PDF / DOCX</strong><span>Text blocks<br>source + page</span></div><div class="connector">→</div>
+      <div class="node"><strong>MANIFEST</strong><span>hash · parser version<br>ingestion status</span></div>
+    </div>
+    <p class="lede">Scanned PDFs and complex layouts may need OCR or layout-aware parsing. Verify extraction on your own files.</p>
+    <div class="foot"><span>CSV/XLSX ≠ PDF/DOCX</span><span>03 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Walk from user question to exact computation and source citation. The agent does not receive the whole corpus. It gets a catalog, query function and evidence search, then composes a response from tool outputs.">
+    <div class="tag">RUNTIME SHAPE</div><h2>Put the data behind narrow tools.</h2>
+    <div class="flow">
+      <div class="node"><strong>QUESTION</strong><span>“Revenue and why?”</span></div><div class="connector">→</div>
+      <div class="node"><strong>ROUTER</strong><span>SQL + evidence<br>only what is needed</span></div><div class="connector">→</div>
+      <div class="node"><strong>ANSWER</strong><span>number + sources<br>or clear abstention</span></div>
+    </div>
+    <div class="lanes">
+      <div class="lane"><h3 class="mint">Structured lane</h3><p>Catalog → validated read-only SELECT → result rows</p></div>
+      <div class="lane"><h3 class="amber">Document lane</h3><p>Search → page/section passages → cited claims</p></div>
+    </div>
+    <div class="foot"><span>AGENTIC ROUTING, DETERMINISTIC EXECUTION</span><span>04 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Explain why DuckDB is a good local demo tool: it can query local analytical data with SQL. For production the storage engine may change. Crucial distinction: these are complementary retrieval paths, not a single universal index.">
+    <div class="tag">DATA LAYER</div><h2>Two stores of truth. Two ways to ask.</h2>
+    <div class="lanes" style="margin-top:46px">
+      <div class="lane"><h3 class="mint">Tables → DuckDB</h3><ul><li>Preserve columns and types</li><li>Group, filter, join, aggregate</li><li>Return exact rows for validation</li></ul></div>
+      <div class="lane"><h3 class="amber">Documents → retrieval</h3><ul><li>Chunk with source coordinates</li><li>Start lexical; benchmark recall</li><li>Try hybrid/vector if evidence misses</li></ul></div>
+    </div>
+    <p class="lede">Scale by selecting a dataset and a few passages, not by expanding the prompt.</p>
+    <div class="foot"><span>KEEP PROVENANCE WITH EVERY RESULT</span><span>05 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Use the frameworks for orchestration, not as competing file parsers. The docs show LangGraph graph primitives and multi-agent patterns; LlamaIndex centers workflows, data connectors and agent workflow. There is no apples-to-apples benchmark here.">
+    <div class="tag">FRAMEWORK CHOICE</div><h2>LangGraph or LlamaIndex?</h2>
+    <div class="compare">
+      <div class="compare-row"><div>QUESTION</div><div>LANGGRAPH</div><div>LLAMAINDEX</div></div>
+      <div class="compare-row"><p>What it makes visible</p><p>Explicit state graph, routing and checkpoints</p><p>Data connectors, retrieval and AgentWorkflow</p></div>
+      <div class="compare-row"><p>Good stream comparison</p><p>Show a controlled tool loop</p><p>Show the same tools in a workflow</p></div>
+      <div class="compare-row"><p>First pick here</p><p class="mint">Yes: explicit orchestration</p><p>Compare on the same cases</p></div>
+    </div>
+    <p class="lede">Keep ingestion and tools framework-neutral. Pick using quality, latency, cost, and operability on your workload.</p>
+    <div class="foot"><span>FIT-BASED RECOMMENDATION, NOT A UNIVERSAL WINNER</span><span>06 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Live code: install the package, ingest example data, inspect catalog, run a safe grouped query, then search a cited passage. Do not start by prompting a model to write Python code over uploaded data.">
+    <div class="tag">LIVE BUILD / 1</div><h2>Make the tools work before the agent.</h2>
+    <div class="code">summary = ingest_folder("data/sample", db_path)
+catalog = list_tables(db_path)
+
+rows = run_readonly_sql(db_path, """
+  SELECT region, sum(revenue) AS revenue
+  FROM sales GROUP BY region
+  ORDER BY revenue DESC
+""")
+
+evidence = search_documents(db_path, "promotion demand")</div>
+    <p class="lede">Pause on rows and source locations. Then ask the model to choose the tools.</p>
+    <div class="foot"><span>DATA → TOOL → OUTPUT</span><span>07 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Demonstrate a mixed question. Compare tool calls and answers from LangGraph and LlamaIndex using one shared tool implementation. Explain query validation and external access disabled for the local demo. Never let the model execute generated Python code.">
+    <div class="tag">LIVE BUILD / 2</div><h2>Same tools. Swap the orchestrator.</h2>
+    <div class="lanes">
+      <div class="lane"><h3 class="mint">LangGraph</h3><ul><li>Model proposes a tool call</li><li>ToolNode runs the bounded function</li><li>Graph returns to the model</li></ul></div>
+      <div class="lane"><h3 class="amber">LlamaIndex</h3><ul><li>AgentWorkflow gets the same tools</li><li>Route the same mixed question</li><li>Compare trace and final evidence</li></ul></div>
+    </div>
+    <div class="code">“How much revenue did North make, and what explains Widget demand?”</div>
+    <div class="foot"><span>NO ARBITRARY CODE EXECUTION</span><span>08 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Hundreds of files is not a vector database problem alone. Talk about incremental ingest by content hash, manifest, queue, worker limits and failure visibility. Benchmark parser throughput separately by format and size. Show a representative 200-file test before making scale claims.">
+    <div class="tag">WHEN THE CORPUS GROWS</div><h2>Hundreds of files need a pipeline.</h2>
+    <div class="flow">
+      <div class="node"><strong>DISCOVER</strong><span>storage event<br>hash + policy</span></div><div class="connector">→</div>
+      <div class="node"><strong>PROCESS</strong><span>bounded queue<br>retry + dead letter</span></div><div class="connector">→</div>
+      <div class="node"><strong>INDEX</strong><span>incremental upsert<br>tenant + ACL</span></div>
+    </div>
+    <div class="columns">
+      <div><h3>Measure each file path</h3><p>Parse time, failures, memory, OCR rate, and index size.</p></div>
+      <div><h3>Make changes resumable</h3><p>Manifest by content hash and parser version; keep original sources.</p></div>
+    </div>
+    <div class="foot"><span>BENCHMARK YOUR REPRESENTATIVE CORPUS</span><span>09 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Use a small fixed eval set. Include answerable table, answerable doc, mixed answer, and unanswerable questions. A deterministic SQL check should compare exact rows. LLM judges can assess grounding but must be calibrated against labeled examples.">
+    <div class="tag">EVALUATION</div><h2>Know what got better.</h2>
+    <div class="metric-grid">
+      <div class="metric"><strong>SQL</strong><p>Exact result equality</p></div>
+      <div class="metric"><strong>RETRIEVAL</strong><p>Recall@k, context precision</p></div>
+      <div class="metric"><strong>ANSWER</strong><p>Claim + citation coverage</p></div>
+      <div class="metric"><strong>AGENT</strong><p>Tool-call accuracy, abstention</p></div>
+    </div>
+    <p class="lede">Same cases, prompt, model, and budget for both frameworks. Save traces so failures can be explained.</p>
+    <div class="foot"><span>GOLDEN CASES ARE PART OF THE PRODUCT</span><span>10 / 12</span></div>
+  </section>
+  <section class="slide" data-notes="Wrap with a performance dashboard. Separate ingestion throughput from question-answer latency. Report p50 and p95 latency, per-stage timings, token cost, memory and failure rates. Optimize the stage that a workload actually bottlenecks.">
+    <div class="tag">PERFORMANCE</div><h2>Finish with a measured scorecard.</h2>
+    <div class="metric-grid">
+      <div class="metric"><strong>QUALITY</strong><p>Accuracy · groundedness</p></div>
+      <div class="metric"><strong>SPEED</strong><p>p50 / p95 latency</p></div>
+      <div class="metric"><strong>COST</strong><p>Tokens + cost / answer</p></div>
+      <div class="metric"><strong>SCALE</strong><p>Files / min · memory · errors</p></div>
+    </div>
+    <p class="lede">Then choose the framework and retrieval strategy from the results, not the demo vibe.</p>
+    <div class="foot"><span>QUALITY FIRST. OPTIMIZE WITH A PROFILE.</span><span>11 / 12</span></div>
+  </section>
+  <section class="slide closing" data-notes="End on the recommendation and take questions. Invite viewers to clone the repository and run the notebook. The first user task for Noah will be to provide the intro footage only when the actual video edit begins.">
+    <div class="tag">TAKEAWAY</div><h2>Build the data tools once.<br><span class="mint">Measure the agents fairly.</span></h2>
+    <p class="lede">Start with LangGraph for a visible, explicit tool loop. Compare LlamaIndex on the same workload. Scale ingestion separately from question answering.</p>
+    <h3 style="margin-top:34px">Repository: mixed-file data analysis agent</h3>
+    <div class="tag" style="margin-top:34px">SOURCES / OFFICIAL DOCS</div>
+    <div class="source-list">
+      <a href="https://docs.langchain.com/oss/python/langchain/multi-agent">LangChain · multi-agent patterns</a>
+      <a href="https://docs.langchain.com/oss/python/langgraph/graph-api">LangGraph · graph API</a>
+      <a href="https://developers.llamaindex.ai/python/llamaagents/workflows/">LlamaIndex · workflows</a>
+      <a href="https://developers.llamaindex.ai/python/framework/understanding/agent/multi_agent/">LlamaIndex · multi-agent patterns</a>
+      <a href="https://docling-project.github.io/docling/usage/supported_formats/">Docling · supported formats</a>
+      <a href="https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/">Ragas · metrics</a>
+    </div>
+    <div class="foot"><span>BUILD / OBSERVE / IMPROVE</span><span>12 / 12</span></div>
+  </section>
+  <div class="controls" aria-hidden="true">← → navigate &nbsp; · &nbsp; ? controls &nbsp; · &nbsp; P print</div>
+  <div class="progress" id="progress"></div>
+</main>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  let index=0;
+  function show(next){index=(next+slides.length)%slides.length;slides.forEach((s,i)=>s.classList.toggle('active',i===index));document.getElementById('progress').style.width=`${(index+1)/slides.length*100}%`;document.title=`${index+1}/${slides.length} · Build a data analysis agent`;}
+  function help(){alert('Arrow keys or Space: move between slides\nP: print / save PDF\nHome / End: first or last slide');}
+  addEventListener('keydown',event=>{if(['ArrowRight',' ','PageDown'].includes(event.key)){event.preventDefault();show(index+1)}else if(['ArrowLeft','PageUp'].includes(event.key)){event.preventDefault();show(index-1)}else if(event.key==='Home'){show(0)}else if(event.key==='End'){show(slides.length-1)}else if(event.key.toLowerCase()==='p'){print()}else if(event.key==='?'){help()}});
+  let touchX=0;addEventListener('touchstart',e=>touchX=e.changedTouches[0].clientX,{passive:true});addEventListener('touchend',e=>{const d=e.changedTouches[0].clientX-touchX;if(Math.abs(d)>50)show(index+(d<0?1:-1))},{passive:true});
+  show(0);
+</script>
+</body>
+</html>

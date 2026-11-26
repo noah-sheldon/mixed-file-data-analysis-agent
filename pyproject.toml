@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mixed-file-data-agent"
+version = "0.1.0"
+description = "A live-demo starter for analysing tabular files and document evidence."
+requires-python = ">=3.11"
+dependencies = [
+  "duckdb>=1.2,<2",
+  "pandas>=2.2,<4",
+  "openpyxl>=3.1,<4",
+  "pypdf>=5,<7",
+  "python-docx>=1.1,<2",
+  "sqlglot>=26,<30",
+]
+
+[project.optional-dependencies]
+langgraph = ["langgraph>=1.0,<2", "langchain-openai>=1.0,<2"]
+llamaindex = ["llama-index-core>=0.14,<1", "llama-index-llms-openai>=0.6,<1"]
+notebook = ["jupyterlab>=4,<5"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+

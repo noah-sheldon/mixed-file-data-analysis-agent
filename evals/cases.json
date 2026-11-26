@@ -1,0 +1,35 @@
+[
+  {
+    "id": "table_revenue_by_region",
+    "question": "Which region generated the most revenue?",
+    "expected_route": ["catalog", "query"],
+    "expected_answer": "North generated 345.00 in revenue.",
+    "expected_sources": ["sales.csv"],
+    "metric": "exact result rows"
+  },
+  {
+    "id": "document_promotion_context",
+    "question": "What explains North Widget demand, and what may happen next month?",
+    "expected_route": ["find_evidence"],
+    "expected_answer": "A January promotion drove demand; the promotion ended January 10, so managers expect fewer February Widget orders unless it returns.",
+    "expected_sources": ["quarterly-notes.md"],
+    "metric": "source and claim coverage"
+  },
+  {
+    "id": "mixed_table_and_document",
+    "question": "How much revenue did North make, and what context explains Widget demand there?",
+    "expected_route": ["catalog", "query", "find_evidence"],
+    "expected_answer": "North generated 345.00; a January promotion drove Widget demand, with lower February orders expected if the offer does not return.",
+    "expected_sources": ["sales.csv", "quarterly-notes.md"],
+    "metric": "numeric correctness plus citation coverage"
+  },
+  {
+    "id": "unknown_evidence_abstention",
+    "question": "What was the CEO's approved hiring plan?",
+    "expected_route": ["find_evidence"],
+    "expected_answer": "The provided files do not contain that information.",
+    "expected_sources": [],
+    "metric": "correct abstention"
+  }
+]
+
