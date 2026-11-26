@@ -81,7 +81,7 @@
       <div><div class="big-number">01</div><h3>Exact table math</h3><p>“Which region led revenue?” should return a queryable result, not a plausible paragraph.</p></div>
       <div><div class="big-number">02</div><h3>Document context</h3><p>“Why did demand change?” needs a passage, a source, and a page or section.</p></div>
     </div>
-    <div class="foot"><span>THE QUESTION DICTATES THE TOOL</span><span>02 / 12</span></div>
+    <div class="foot"><span>THE QUESTION DICTATES THE TOOL</span><span>02 / 15</span></div>
   </section>
   <section class="slide" data-notes="Explain that ingestion is format-specific. XLSX can contain several logical tables. PDFs can be scanned or table-heavy, and parser choice should be driven by a representative corpus and measured extraction quality.">
     <div class="tag">INGESTION</div><h2>Normalize the files. Keep the original trail.</h2>
@@ -91,7 +91,7 @@
       <div class="node"><strong>MANIFEST</strong><span>hash · parser version<br>ingestion status</span></div>
     </div>
     <p class="lede">Scanned PDFs and complex layouts may need OCR or layout-aware parsing. Verify extraction on your own files.</p>
-    <div class="foot"><span>CSV/XLSX ≠ PDF/DOCX</span><span>03 / 12</span></div>
+    <div class="foot"><span>CSV/XLSX ≠ PDF/DOCX</span><span>03 / 15</span></div>
   </section>
   <section class="slide" data-notes="Walk from user question to exact computation and source citation. The agent does not receive the whole corpus. It gets a catalog, query function and evidence search, then composes a response from tool outputs.">
     <div class="tag">RUNTIME SHAPE</div><h2>Put the data behind narrow tools.</h2>
@@ -104,7 +104,7 @@
       <div class="lane"><h3 class="mint">Structured lane</h3><p>Catalog → validated read-only SELECT → result rows</p></div>
       <div class="lane"><h3 class="amber">Document lane</h3><p>Search → page/section passages → cited claims</p></div>
     </div>
-    <div class="foot"><span>AGENTIC ROUTING, DETERMINISTIC EXECUTION</span><span>04 / 12</span></div>
+    <div class="foot"><span>AGENTIC ROUTING, DETERMINISTIC EXECUTION</span><span>04 / 15</span></div>
   </section>
   <section class="slide" data-notes="Show the warehouse path. Keep originals and manifest, normalize sheets and tables in layers, publish curated metrics for exact queries, and place document text in a search index with source/page/access metadata. Hundreds of files alone do not require three copies or a cloud warehouse. If an existing warehouse exists, use its governed access and semantic layer.">
     <div class="tag">WAREHOUSE PATH</div><h2>Files land raw. Trusted answers come from curated data.</h2>
@@ -118,7 +118,21 @@
       <div class="lane"><h3 class="amber">PDF / DOCX → search</h3><p>Text chunks with page, file ID, hash and ACL</p></div>
     </div>
     <p class="lede">Keep the source, govern the metrics, retrieve only relevant context.</p>
-    <div class="foot"><span>USE THE WAREHOUSE YOU ALREADY HAVE</span><span>05 / 14</span></div>
+    <div class="foot"><span>USE THE WAREHOUSE YOU ALREADY HAVE</span><span>05 / 15</span></div>
+  </section>
+  <section class="slide" data-notes="Distinguish extraction, reusable file references, search indexing and prompt caching. GPT and Claude can seem fast because ingestion/retrieval may have happened before the question, and the answer uses selected context. Prompt cache is for matching stable prefixes; it is not the searchable corpus. OpenAI's direct file inputs use separate PDF, Word/text, and spreadsheet paths; Claude's PDF path provides page text and images. Measure ingestion separately from answer latency.">
+    <div class="tag">WHY IT FEELS INSTANT</div><h2>Fast file answers use a pipeline.</h2>
+    <div class="flow">
+      <div class="node"><strong>PREPARE</strong><span>extract text<br>tables · page images</span></div><div class="connector">→</div>
+      <div class="node"><strong>INDEX</strong><span>store searchable<br>chunks + provenance</span></div><div class="connector">→</div>
+      <div class="node"><strong>ANSWER</strong><span>retrieve a few<br>relevant pieces</span></div>
+    </div>
+    <div class="lanes">
+      <div class="lane"><h3 class="mint">File ID ≠ index</h3><p>Reusable reference avoids re-uploading; corpus search needs an index.</p></div>
+      <div class="lane"><h3 class="amber">Prompt cache ≠ file store</h3><p>Reuses matching prompt prefixes; it does not search every document.</p></div>
+    </div>
+    <p class="lede">For hundreds of files, ingest once, retrieve selectively, and measure each stage.</p>
+    <div class="foot"><span>PREP TIME ≠ QUERY TIME ≠ CACHE</span><span>06 / 15</span></div>
   </section>
   <section class="slide" data-notes="The question is whether the task needs autonomous decisions. A plain function/tool loop is enough for fixed sequence work. A graph is useful for state, branches, retries and checkpoints. Do not confuse data/file scaling with agent workflow complexity.">
     <div class="tag">DO WE NEED A FRAMEWORK?</div><h2>Start with the smallest controller that works.</h2>
@@ -130,7 +144,7 @@
       <div class="compare-row"><p>Warehouse agent</p><p>One cloud stack already in place</p><p>Managed permissions + native semantics</p></div>
     </div>
     <p class="lede">A framework helps with orchestration. It does not fix unclear metric definitions or poor source data.</p>
-    <div class="foot"><span>FRAMEWORKS ARE OPTIONAL</span><span>06 / 14</span></div>
+    <div class="foot"><span>FRAMEWORKS ARE OPTIONAL</span><span>07 / 15</span></div>
   </section>
   <section class="slide" data-notes="Answer the Deep Agents question directly: the harness uses the LangGraph runtime. For this product a known, bounded data path is easier to govern. A Deep Agent is suitable for a broader analyst that explores, adjusts, generates notebooks/reports, and retains context. Keep tool permissions and query constraints outside its autonomy.">
     <div class="tag">LANGGRAPH WORKFLOW OR DEEP AGENT?</div><h2>Same runtime family. Different autonomy.</h2>
@@ -139,7 +153,7 @@
       <div class="lane"><h3 class="amber">Deep Agent for analyst work</h3><ul><li>Plan an investigation as it learns</li><li>Work through large, variable evidence</li><li>Delegate domains; create a report</li></ul></div>
     </div>
     <p class="lede">Deep Agents is a LangGraph-based harness—not a separate competing runtime. Keep warehouse access narrow in either design.</p>
-    <div class="foot"><span>ADD AUTONOMY WHEN THE TASK NEEDS IT</span><span>07 / 14</span></div>
+    <div class="foot"><span>ADD AUTONOMY WHEN THE TASK NEEDS IT</span><span>08 / 15</span></div>
   </section>
   <section class="slide" data-notes="Use the company examples. Spotify uses expert-owned clusters with table profiles, vetted NL-to-SQL examples, and docs. OpenAI describes offline context enrichment, selected runtime context, live warehouse queries, and notebooks/reports. incident.io describes a data-query tool that validates table allowlists and scan cost. The repeated lesson is governed context and reliable execution; company blogs are self-reported case studies, not independent comparisons.">
     <div class="tag">WHAT TEAMS PUBLISH ABOUT THEIR SYSTEMS</div><h2>They invest in context and safe access.</h2>
@@ -150,7 +164,7 @@
       <div><h3 class="amber">Uber · intent first</h3><p>Static schema/examples stopped scaling; route to relevant context instead of sending it all.</p></div>
     </div>
     <p class="lede">Across these case studies: curated context, domain ownership, result traces, and evals.</p>
-    <div class="foot"><span>PUBLIC COMPANY BLOGS; SELF-REPORTED RESULTS</span><span>08 / 14</span></div>
+    <div class="foot"><span>PUBLIC COMPANY BLOGS; SELF-REPORTED RESULTS</span><span>09 / 15</span></div>
   </section>
   <section class="slide" data-notes="Live code: install the package, ingest example data, inspect catalog, run a safe grouped query, then search a cited passage. Do not start by prompting a model to write Python code over uploaded data.">
     <div class="tag">LIVE BUILD / 1</div><h2>Make the tools work before the agent.</h2>
@@ -165,7 +179,7 @@ rows = run_readonly_sql(db_path, """
 
 evidence = search_documents(db_path, "promotion demand")</div>
     <p class="lede">Pause on rows and source locations. Then ask the model to choose the tools.</p>
-    <div class="foot"><span>DATA → TOOL → OUTPUT</span><span>09 / 14</span></div>
+    <div class="foot"><span>DATA → TOOL → OUTPUT</span><span>10 / 15</span></div>
   </section>
   <section class="slide" data-notes="Demonstrate a mixed question. Compare tool calls and answers from LangGraph and LlamaIndex using one shared tool implementation. Explain query validation and external access disabled for the local demo. Never let the model execute generated Python code.">
     <div class="tag">LIVE BUILD / 2</div><h2>Same tools. Swap the orchestrator.</h2>
@@ -174,7 +188,7 @@ evidence = search_documents(db_path, "promotion demand")</div>
       <div class="lane"><h3 class="amber">LlamaIndex</h3><ul><li>AgentWorkflow gets the same tools</li><li>Route the same mixed question</li><li>Compare trace and final evidence</li></ul></div>
     </div>
     <div class="code">“How much revenue did North make, and what explains Widget demand?”</div>
-    <div class="foot"><span>NO ARBITRARY CODE EXECUTION</span><span>10 / 14</span></div>
+    <div class="foot"><span>NO ARBITRARY CODE EXECUTION</span><span>11 / 15</span></div>
   </section>
   <section class="slide" data-notes="Hundreds of files is not a vector database problem alone. Talk about incremental ingest by content hash, manifest, queue, worker limits and failure visibility. Benchmark parser throughput separately by format and size. Show a representative 200-file test before making scale claims.">
     <div class="tag">WHEN THE CORPUS GROWS</div><h2>Hundreds of files need a pipeline.</h2>
@@ -187,7 +201,7 @@ evidence = search_documents(db_path, "promotion demand")</div>
       <div><h3>Measure each file path</h3><p>Parse time, failures, memory, OCR rate, and index size.</p></div>
       <div><h3>Make changes resumable</h3><p>Manifest by content hash and parser version; keep original sources.</p></div>
     </div>
-    <div class="foot"><span>BENCHMARK YOUR REPRESENTATIVE CORPUS</span><span>11 / 14</span></div>
+    <div class="foot"><span>BENCHMARK YOUR REPRESENTATIVE CORPUS</span><span>12 / 15</span></div>
   </section>
   <section class="slide" data-notes="Use a small fixed eval set. Include answerable table, answerable doc, mixed answer, and unanswerable questions. A deterministic SQL check should compare exact rows. LLM judges can assess grounding but must be calibrated against labeled examples.">
     <div class="tag">EVALUATION</div><h2>Know what got better.</h2>
@@ -198,7 +212,7 @@ evidence = search_documents(db_path, "promotion demand")</div>
       <div class="metric"><strong>AGENT</strong><p>Tool-call accuracy, abstention</p></div>
     </div>
     <p class="lede">Same cases, prompt, model, and budget for both frameworks. Save traces so failures can be explained.</p>
-    <div class="foot"><span>GOLDEN CASES ARE PART OF THE PRODUCT</span><span>12 / 14</span></div>
+    <div class="foot"><span>GOLDEN CASES ARE PART OF THE PRODUCT</span><span>13 / 15</span></div>
   </section>
   <section class="slide" data-notes="Wrap with a performance dashboard. Separate ingestion throughput from question-answer latency. Report p50 and p95 latency, per-stage timings, token cost, memory and failure rates. Optimize the stage that a workload actually bottlenecks.">
     <div class="tag">PERFORMANCE</div><h2>Finish with a measured scorecard.</h2>
@@ -209,7 +223,7 @@ evidence = search_documents(db_path, "promotion demand")</div>
       <div class="metric"><strong>SCALE</strong><p>Files / min · memory · errors</p></div>
     </div>
     <p class="lede">Then choose the framework and retrieval strategy from the results, not the demo vibe.</p>
-    <div class="foot"><span>QUALITY FIRST. OPTIMIZE WITH A PROFILE.</span><span>13 / 14</span></div>
+    <div class="foot"><span>QUALITY FIRST. OPTIMIZE WITH A PROFILE.</span><span>14 / 15</span></div>
   </section>
   <section class="slide closing" data-notes="End on the recommendation and take questions. Invite viewers to clone the repository and run the notebook. The first user task for Noah will be to provide the intro footage only when the actual video edit begins.">
     <div class="tag">TAKEAWAY</div><h2>Build the data tools once.<br><span class="mint">Measure the agents fairly.</span></h2>
@@ -228,8 +242,11 @@ evidence = search_documents(db_path, "promotion demand")</div>
       <a href="https://www.uber.com/us/en/blog/query-gpt/">Uber · QueryGPT</a>
       <a href="https://docling-project.github.io/docling/usage/supported_formats/">Docling · supported formats</a>
       <a href="https://docs.ragas.io/en/latest/concepts/metrics/available_metrics/">Ragas · metrics</a>
+      <a href="https://developers.openai.com/api/docs/guides/file-inputs">OpenAI · file inputs</a>
+      <a href="https://platform.claude.com/docs/en/build-with-claude/pdf-support">Claude · PDF support</a>
+      <a href="https://developers.openai.com/api/docs/guides/prompt-caching">OpenAI · prompt caching</a>
     </div>
-    <div class="foot"><span>BUILD / OBSERVE / IMPROVE</span><span>14 / 14</span></div>
+    <div class="foot"><span>BUILD / OBSERVE / IMPROVE</span><span>15 / 15</span></div>
   </section>
   <div class="controls" aria-hidden="true">← → navigate &nbsp; · &nbsp; ? controls &nbsp; · &nbsp; P print</div>
   <div class="progress" id="progress"></div>

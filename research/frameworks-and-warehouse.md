@@ -120,6 +120,22 @@ For analyst questions, expose curated gold views or a semantic layer with metric
 
 Choose among cloud warehouses using existing contracts, data residency, governance, workloads, and team skills; this prompt does not identify an existing cloud, so no vendor-specific deployment is assumed.
 
+## Why document answers can arrive in seconds: parsing, indexing, caching
+
+“It read my file in seconds” can describe several different paths. These stages should be measured separately:
+
+1. **Parse / extract:** turn file bytes into text, tables, and (for vision-capable PDF paths) page images. Parsing behavior is product- and file-type-specific. OpenAI's Responses file-input guide says PDFs contribute extracted text plus page images; DOCX and other non-PDF documents contribute extracted text; spreadsheets use a spreadsheet-specific augmentation path that reads up to the first 1,000 rows per sheet and adds generated summary/header metadata. The guide recommends hosted shell for deep spreadsheet operations such as joins and aggregations. This makes a quick summary different from exhaustive analysis of an arbitrarily large workbook. [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs)
+2. **Upload / reference:** a persistent file ID can avoid sending the original bytes again. Anthropic's Files API is explicitly “upload once, reference by file_id” for Messages API requests; that is reusable storage/reference, not evidence that every file was pre-indexed into a searchable corpus. [Anthropic Files API](https://platform.claude.com/docs/en/build-with-claude/files)
+3. **Index / retrieve:** for a corpus, ingest ahead of time, split/prepare searchable units, then fetch only relevant evidence for a question. OpenAI File Search requires files in a vector store before invoking search; this is the distinct large-corpus path instead of repeatedly passing entire files as input. [OpenAI File Search](https://developers.openai.com/api/docs/guides/tools-file-search)
+4. **Model inference:** the model answers from the extracted or retrieved context. A quick first token/streamed answer does not mean the whole corpus was read or exhaustively computed.
+5. **Prompt cache:** cache repeated prompt prefixes, not a general document database. OpenAI describes saving an eligible prefix and reusing the longest exact matching prefix in later requests. Anthropic exposes cache creation/read token counts for its cacheable prefixes. This can reduce repeated input processing/cost when a stable prompt or document context recurs; changing the prefix may prevent reuse. [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), [Anthropic prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
+
+Claude's published PDF flow extracts each page's text **and** converts each page to an image, then supplies both to the model so it can interpret charts and layout. Anthropic recommends Files API references for large PDFs or PDFs used repeatedly. This still differs from a vector retrieval index. [Claude PDF support](https://platform.claude.com/docs/en/build-with-claude/pdf-support)
+
+These are documented API behaviors, not a claim that the consumer ChatGPT and Claude apps use exactly the same pipeline for every upload. Their public UI implementation details are not fully specified in these API guides.
+
+**Build implication for hundreds of mixed files:** process files asynchronously and incrementally (hash + parser version), keep source/page/sheet provenance and access metadata, and measure parse/index throughput separately from query latency. At question time, retrieve a small, permission-filtered set of relevant passages/tables. Use prompt caching only for stable repeated prompt/context prefixes, and confirm cache hits from the API usage fields instead of assuming caching explains a fast response. For exact numeric analysis, query typed tables in a database/warehouse; for narrative evidence, use document search. A prompt cache does not make full-corpus analytics reliable.
+
 ## Primary documentation consulted
 
 ### Agent frameworks
@@ -153,4 +169,10 @@ Choose among cloud warehouses using existing contracts, data residency, governan
 - [Databricks Genie Agent quality](https://docs.databricks.com/aws/en/genie-agents/tune-quality/)
 - [dbt Semantic Layer](https://docs.getdbt.com/docs/use-dbt-semantic-layer/dbt-sl)
 - [DuckDB Parquet and query docs](https://duckdb.org/docs/stable/data/parquet/overview)
+- [OpenAI file inputs](https://developers.openai.com/api/docs/guides/file-inputs)
+- [OpenAI File Search](https://developers.openai.com/api/docs/guides/tools-file-search)
+- [OpenAI prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching)
+- [Claude PDF support](https://platform.claude.com/docs/en/build-with-claude/pdf-support)
+- [Claude Files API](https://platform.claude.com/docs/en/build-with-claude/files)
+- [Claude prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching)
 
